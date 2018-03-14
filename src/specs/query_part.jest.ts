@@ -1,10 +1,6 @@
-
-import {describe, it, expect} from 'test/lib/common';
-
 import queryPart from '../query_part';
 
 describe('InfluxQueryPart', () => {
-
   describe('series with measurement only', () => {
     it('should handle nested function parts', () => {
       var part = queryPart.create({
@@ -12,17 +8,17 @@ describe('InfluxQueryPart', () => {
         params: ['10s'],
       });
 
-      expect(part.text).to.be('derivative(10s)');
-      expect(part.render('mean(value)')).to.be('derivative(mean(value), 10s)');
+      expect(part.text).toBe('derivative(10s)');
+      expect(part.render('mean(value)')).toBe('derivative(mean(value), 10s)');
     });
 
     it('should nest spread function', () => {
       var part = queryPart.create({
-        type: 'spread'
+        type: 'spread',
       });
 
-      expect(part.text).to.be('spread()');
-      expect(part.render('value')).to.be('spread(value)');
+      expect(part.text).toBe('spread()');
+      expect(part.render('value')).toBe('spread(value)');
     });
 
     it('should handle suffix parts', () => {
@@ -31,8 +27,8 @@ describe('InfluxQueryPart', () => {
         params: ['/ 100'],
       });
 
-      expect(part.text).to.be('math(/ 100)');
-      expect(part.render('mean(value)')).to.be('mean(value) / 100');
+      expect(part.text).toBe('math(/ 100)');
+      expect(part.render('mean(value)')).toBe('mean(value) / 100');
     });
 
     it('should handle alias parts', () => {
@@ -41,10 +37,8 @@ describe('InfluxQueryPart', () => {
         params: ['test'],
       });
 
-      expect(part.text).to.be('alias(test)');
-      expect(part.render('mean(value)')).to.be('mean(value) AS "test"');
+      expect(part.text).toBe('alias(test)');
+      expect(part.render('mean(value)')).toBe('mean(value) AS "test"');
     });
-
   });
-
 });
