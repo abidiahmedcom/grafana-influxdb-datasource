@@ -2,6 +2,7 @@ name: Run commands when issues are labeled
 on:
   issues:
     types: [labeled]
+
 jobs:
   main:
     runs-on: ubuntu-latest
