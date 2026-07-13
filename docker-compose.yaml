@@ -4,6 +4,8 @@ services:
       file: .config/docker-compose-base.yaml
       service: grafana
     environment:
+      GF_FEATURE_TOGGLES_newInfluxDSConfigPageDesign: 'true'
+      GF_FEATURE_TOGGLES_influxDBConfigValidation: 'true'
       # Grafana 13 enables splashScreen by default; the overlay blocks Playwright interactions.
       GF_FEATURE_TOGGLES_splashScreen: 'false'
     configs:
@@ -14,6 +16,60 @@ services:
       # [plugin.influxdb] already exists in defaults.ini — and it doesn't.
       - source: grafana_custom_ini
         target: /etc/grafana/grafana.ini
+    depends_on:
+      influxdb-loader:
+        condition: service_completed_successfully
+
+  influxdb:
+    image: influxdb:3-core
+    command:
+      - influxdb3
+      - serve
+      - --node-id=local-node
+      - --object-store=memory
+      - --without-auth
+    ports:
+      - "8181:8181"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  influxdb-loader:
+    image: curlimages/curl:latest
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        NOW=$$(date +%s)
+        # Generate data points at 5-minute intervals starting 4 hours ago.
+        {
+          i=0
+          while [ "$$i" -lt 48 ]; do
+            T_S=$$((NOW - 14400 + i * 300))
+            T="$${T_S}000000000"
+            printf 'server_metrics,app=beyla,datacenter=afr0,host=host1,host_dns=host1.eu0.com usage=5404i,utilisation=762i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=afr0,host=host2,host_dns=host2.eu1.com usage=7780i,utilisation=747i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=afr0,host=host3,host_dns=host4.afr0.com usage_bytes=43145790178i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=afr1,host=host1,host_dns=host3.apac0.com usage=5139i,utilisation=929i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=afr1,host=host2,host_dns=host4.us0.com usage=4579i,utilisation=835i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=afr1,host=host3,host_dns=host7.apac0.com usage_bytes=22712796628i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=apac0,host=host1,host_dns=host5.eu1.com usage=8357i,utilisation=900i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=apac0,host=host2,host_dns=host6.afr1.com usage=6218i,utilisation=833i %s\n' "$$T"
+            printf 'server_metrics,app=beyla,datacenter=apac0,host=host3,host_dns=host8.afr1.com usage_bytes=73961332326i %s\n' "$$T"
+            i=$$((i + 1))
+          done
+        } | curl -sf --retry 5 --retry-delay 2 --retry-connrefused --retry-all-errors \
+          -X POST "http://influxdb:8181/api/v3/write_lp?db=grafanainfluxdb" \
+          -H "Content-Type: text/plain; charset=utf-8" \
+          --data-binary @-
+    restart: no
 
 configs:
   grafana_custom_ini:
