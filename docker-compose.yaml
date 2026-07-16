@@ -6,6 +6,14 @@ services:
     environment:
       # Grafana 13 enables splashScreen by default; the overlay blocks Playwright interactions.
       GF_FEATURE_TOGGLES_splashScreen: 'false'
+      # On slow CI runners, concurrent startup writes to sqlite can fail
+      # datasource provisioning with SQLITE_BUSY, which Grafana 13 treats as a
+      # fatal module failure. WAL reduces lock contention, but write-write
+      # collisions still surface as SQLITE_BUSY. Grafana 13.0.x retries only 5
+      # times with ~15ms sleeps (13.1 moved to 10 retries with 100ms+
+      # exponential backoff), so raise the retry budget to ride out the burst.
+      GF_DATABASE_WAL: 'true'
+      GF_DATABASE_TRANSACTION_RETRIES: '30'
     depends_on:
       # service_completed_successfully stops Grafana starting against an empty
       # backend, which would let Playwright run fixture-data tests before the
