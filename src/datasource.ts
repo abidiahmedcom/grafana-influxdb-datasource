@@ -34,7 +34,6 @@ import { QueryFormat, type SQLQuery } from '@grafana/sql';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
-import { FSQLEditor } from './components/editor/query/fsql/FSQLEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import { toRawSql } from './fsql/sqlUtil';
 import InfluxQueryModel from './influx_query_model';
@@ -93,13 +92,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
       this.annotations = {
         QueryEditor: FluxQueryEditor,
-      };
-    } else if (this.version === InfluxVersion.SQL) {
-      // SQL annotations run through the standard annotation pipeline: the
-      // regular backend query executes the rawSql and the frame fields are
-      // mapped to annotation events by the shared field mapper
-      this.annotations = {
-        QueryEditor: FSQLEditor,
       };
     } else {
       this.annotations = {
@@ -163,12 +155,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   /**
    * Returns false if the query should be skipped
    */
-  filterQuery(query: InfluxQuery & SQLQuery): boolean {
+  filterQuery(query: InfluxQuery): boolean {
     if (this.version === InfluxVersion.Flux) {
       return !!query.query;
-    }
-    if (this.version === InfluxVersion.SQL) {
-      return !!query.rawSql;
     }
     return true;
   }

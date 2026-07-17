@@ -18,7 +18,3 @@ jobs:
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
       run-playwright: true
-      # Grafana only starts once the three InfluxDB containers are healthy and
-      # their fixture loaders have completed, so the default 60s endpoint wait
-      # can be too tight on busy runners.
-      playwright-grafana-timeout: 180
