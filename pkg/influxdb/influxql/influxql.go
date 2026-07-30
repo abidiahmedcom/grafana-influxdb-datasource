@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
+
 	"github.com/grafana/grafana-influxdb-datasource/pkg/influxdb/influxql/buffered"
 	"github.com/grafana/grafana-influxdb-datasource/pkg/influxdb/influxql/querydata"
 	"github.com/grafana/grafana-influxdb-datasource/pkg/influxdb/models"
@@ -81,15 +82,11 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 				return nil
 			}
 
-			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, config.FeatureToggles().IsEnabled("influxqlStreamingParser"))
+			resp, _ := execute(ctx, tracer, dsInfo, logger, query, request, config.FeatureToggles().IsEnabled("influxqlStreamingParser"))
 
 			responseLock.Lock()
 			defer responseLock.Unlock()
-			if err != nil {
-				response.Responses[query.RefID] = backend.DataResponse{Error: err}
-			} else {
-				response.Responses[query.RefID] = resp
-			}
+			response.Responses[query.RefID] = resp
 			return nil // errors are saved per-query,always return nil
 		})
 
@@ -124,13 +121,8 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 				continue
 			}
 
-			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, config.FeatureToggles().IsEnabled("influxqlStreamingParser"))
-
-			if err != nil {
-				response.Responses[query.RefID] = backend.DataResponse{Error: err}
-			} else {
-				response.Responses[query.RefID] = resp
-			}
+			resp, _ := execute(ctx, tracer, dsInfo, logger, query, request, config.FeatureToggles().IsEnabled("influxqlStreamingParser"))
+			response.Responses[query.RefID] = resp
 		}
 	}
 
