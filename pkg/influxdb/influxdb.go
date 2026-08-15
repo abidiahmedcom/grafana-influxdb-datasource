@@ -30,6 +30,20 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	}
 	opts.ForwardHTTPHeaders = true
 
+	var authSettings struct {
+		OAuthPassThru bool `json:"oauthPassThru"`
+	}
+	if err := json.Unmarshal(settings.JSONData, &authSettings); err != nil {
+		return nil, fmt.Errorf("error reading settings: %w", err)
+	}
+
+	// OAuth pass-through and Basic Auth both populate the "Authorization" header,
+	// and BasicAuthenticationMiddleware runs ahead of the header-forwarding
+	// middleware, which skips forwarding headers which are already set.
+	if authSettings.OAuthPassThru {
+		opts.BasicAuth = nil
+	}
+
 	client, err := httpclient.NewProvider().New(opts)
 	if err != nil {
 		return nil, err
