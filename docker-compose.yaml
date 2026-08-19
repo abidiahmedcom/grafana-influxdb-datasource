@@ -43,7 +43,7 @@ services:
   # InfluxDB 1.x (InfluxQL). Auth disabled by default in the OSS 1.x image.
   # ---------------------------------------------------------------------------
   influxdb1:
-    image: influxdb:1.11
+    image: influxdb:1.12@sha256:41a5ef94f9cb8d6c99a4d7088daf22735b8d447e8a4be0f40d1cdde2f93867da
     ports:
       - 8086:8086/tcp
     healthcheck:
@@ -53,7 +53,7 @@ services:
       retries: 20
 
   influxdb1-loader:
-    image: curlimages/curl:latest
+    image: curlimages/curl:latest@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
     depends_on:
       influxdb1:
         condition: service_healthy
@@ -76,7 +76,7 @@ services:
   # InfluxDB 2.x (Flux, plus InfluxQL via a DBRP mapping created by the loader).
   # ---------------------------------------------------------------------------
   influxdb2:
-    image: influxdb:2.7
+    image: influxdb:2.9@sha256:270145207873eb426e15a211063532fc6f966f4ffb6edf4114ffac83ac4696eb
     ports:
       - 8087:8086/tcp
     environment:
@@ -95,7 +95,7 @@ services:
 
   influxdb2-loader:
     # Server image so the `influx` CLI matches the server version exactly.
-    image: influxdb:2.7
+    image: influxdb:2.9@sha256:270145207873eb426e15a211063532fc6f966f4ffb6edf4114ffac83ac4696eb
     depends_on:
       influxdb2:
         condition: service_healthy
@@ -128,7 +128,7 @@ services:
   # in-memory object store because fixtures are reloaded on every `up`.
   # ---------------------------------------------------------------------------
   influxdb3:
-    image: influxdb:3-core
+    image: influxdb:3-core@sha256:12d4537ff34a7906641be428010550d584a8660f5ab1017aad87a34b499981c2
     command: influxdb3 serve --node-id node0 --object-store memory --without-auth
     ports:
       - 8181:8181/tcp
@@ -139,7 +139,7 @@ services:
       retries: 20
 
   influxdb3-loader:
-    image: curlimages/curl:latest
+    image: curlimages/curl:latest@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
     depends_on:
       influxdb3:
         condition: service_healthy
